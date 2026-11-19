@@ -1,0 +1,57 @@
+<section class="upload card">
+  <h2>Upload an invoice</h2>
+  <p class="muted">PDF, JPG, PNG or WEBP, up to 10 MB. The AI extracts the fields, then rule checks flag anything suspicious.</p>
+  <label class="button" [class.disabled]="uploading()">
+    {{ uploading() ? 'Extracting…' : 'Choose file' }}
+    <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" (change)="onFileSelected($event)" [disabled]="uploading()" hidden />
+  </label>
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+</section>
+
+<section class="card">
+  <h2>Invoices</h2>
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else if (invoices().length === 0) {
+    <p class="muted">No invoices yet. Upload one above.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Supplier</th>
+            <th>Invoice no.</th>
+            <th>Date</th>
+            <th class="num">Total</th>
+            <th>Checks</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (inv of invoices(); track inv.id) {
+            <tr [routerLink]="['/invoices', inv.id]" class="clickable">
+              <td>{{ inv.supplierName ?? inv.fileName }}</td>
+              <td>{{ inv.invoiceNumber ?? '—' }}</td>
+              <td>{{ inv.invoiceDate ? (inv.invoiceDate | date: 'dd MMM yyyy') : '—' }}</td>
+              <td class="num">{{ inv.total !== null ? (inv.total | currency: 'INR') : '—' }}</td>
+              <td>
+                @if (inv.errorCount > 0) {
+                  <span class="badge error">{{ inv.errorCount }} error{{ inv.errorCount > 1 ? 's' : '' }}</span>
+                }
+                @if (inv.warningCount > 0) {
+                  <span class="badge warning">{{ inv.warningCount }} warning{{ inv.warningCount > 1 ? 's' : '' }}</span>
+                }
+                @if (inv.errorCount === 0 && inv.warningCount === 0) {
+                  <span class="badge ok">OK</span>
+                }
+              </td>
+              <td><span class="status" [class.approved]="inv.status === 'Approved'">{{ inv.status === 'Approved' ? 'Approved' : 'Needs review' }}</span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

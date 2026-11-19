@@ -1,0 +1,12 @@
+{
+  "SupplierName": "Kochi Medicals Pvt Ltd",
+  "SupplierGstin": "32AACCK8812P1Z8",
+  "BuyerGstin": "32ABCDE1234F1Z9",
+  "InvoiceNumber": "KM/26-27/3258",
+  "InvoiceDate": "2026-09-01",
+  "TaxableValue": 25515.09,
+  "Cgst": 1530.9,
+  "Sgst": 1530.9,
+  "Igst": 0.0,
+  "Total": 28576.89
+}

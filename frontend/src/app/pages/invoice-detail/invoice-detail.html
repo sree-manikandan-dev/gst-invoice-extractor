@@ -1,0 +1,59 @@
+<a routerLink="/" class="back">← All invoices</a>
+
+@if (error()) {
+  <p class="error">{{ error() }}</p>
+}
+
+@if (invoice(); as inv) {
+  <div class="layout">
+    <section class="card preview">
+      <h2>{{ inv.fileName }}</h2>
+      @if (isPdf()) {
+        <iframe [src]="pdfUrl()" title="Invoice PDF"></iframe>
+      } @else {
+        <img [src]="fileUrl()" alt="Uploaded invoice" />
+      }
+    </section>
+
+    <section class="card">
+      <div class="header-row">
+        <h2>Review</h2>
+        <span class="status" [class.approved]="inv.status === 'Approved'">{{ inv.status === 'Approved' ? 'Approved' : 'Needs review' }}</span>
+      </div>
+
+      @if (inv.flags.length > 0) {
+        <ul class="flags">
+          @for (flag of inv.flags; track $index) {
+            <li [class]="flag.severity.toLowerCase()"><strong>{{ flag.severity }}:</strong> {{ flag.message }}</li>
+          }
+        </ul>
+      } @else {
+        <p class="ok-text">All checks passed.</p>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="save()">
+        @for (f of fields; track f.key) {
+          <label [class.has-flag]="flagsFor(f.key).length > 0">
+            <span>{{ f.label }}</span>
+            <input [type]="f.type" [formControlName]="f.key" [attr.step]="f.type === 'number' ? '0.01' : null" />
+          </label>
+        }
+        <div class="actions">
+          <button type="submit" [disabled]="saving() || form.pristine">Save corrections</button>
+          <button type="button" class="primary" (click)="approve()" [disabled]="saving() || hasErrors() || inv.status === 'Approved'"
+                  [title]="hasErrors() ? 'Fix the error flags first' : ''">Approve</button>
+          <button type="button" class="danger" (click)="remove()" [disabled]="saving()">Delete</button>
+        </div>
+        @if (message()) {
+          <p class="ok-text">{{ message() }}</p>
+        }
+      </form>
+
+      <p class="meta muted">
+        Read by {{ inv.model }} in {{ inv.extractionMs / 1000 | number: '1.1-1' }} s,
+        {{ inv.inputTokens + inv.outputTokens | number }} tokens.
+        @if (inv.wasCorrected) { Corrected by a reviewer. }
+      </p>
+    </section>
+  </div>
+}

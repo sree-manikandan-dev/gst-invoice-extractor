@@ -1,0 +1,32 @@
+name: Deploy
+
+# Manual deploy to one server (e.g. an AWS EC2 or Lightsail instance) running Docker Compose.
+# One-time server setup is in docs/DEPLOY.md. Required repository secrets:
+#   DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy compose file to the server
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          install -m 600 /dev/null key && echo "$SSH_KEY" > key
+          scp -i key -o StrictHostKeyChecking=accept-new docker-compose.yml "$USER@$HOST:~/app/docker-compose.yml"
+      - name: Pull the new images and restart
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+        # API_IMAGE / WEB_IMAGE and the secrets live in ~/app/.env on the server (see docs/DEPLOY.md).
+        run: |
+          ssh -i key "$USER@$HOST" "cd ~/app && docker compose pull api web && docker compose up -d --no-build && docker image prune -f"

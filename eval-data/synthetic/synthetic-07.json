@@ -1,0 +1,12 @@
+{
+  "SupplierName": "Sree Durga Textiles",
+  "SupplierGstin": "32BBQPS5612H1ZH",
+  "BuyerGstin": "32ABCDE1234F1Z9",
+  "InvoiceNumber": "SD/26-27/6202",
+  "InvoiceDate": "2026-02-18",
+  "TaxableValue": 36621.72,
+  "Cgst": 915.54,
+  "Sgst": 915.54,
+  "Igst": 0.0,
+  "Total": 38452.8
+}

@@ -1,0 +1,21 @@
+# .NET
+bin/
+obj/
+TestResults/
+*.user
+.vs/
+
+# Angular / Node
+node_modules/
+dist/
+.angular/
+
+# Secrets and local files
+.env
+*.local.json
+eval-results.md
+
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

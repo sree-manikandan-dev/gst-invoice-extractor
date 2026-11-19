@@ -1,0 +1,31 @@
+name: Extraction eval
+
+# Manual only: every run calls the Claude API on the eval set and costs money.
+on:
+  workflow_dispatch:
+    inputs:
+      min_accuracy:
+        description: Fail the run if field accuracy is below this (0 to 1)
+        default: "0.85"
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Run eval
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: dotnet run --project src/GstInvoice.Eval -c Release -- ../eval-data --min ${{ inputs.min_accuracy }} --out eval-results.md
+      - name: Add results to the run summary
+        if: always()
+        run: cat eval-results.md >> "$GITHUB_STEP_SUMMARY" || true

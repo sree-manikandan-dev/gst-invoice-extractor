@@ -1,0 +1,42 @@
+# Runs the whole app: Postgres + .NET API + Angular (nginx).
+#   cp .env.example .env    # then add your ANTHROPIC_API_KEY, or leave EXTRACTION_PROVIDER=Fake
+#   docker compose up --build
+# Open http://localhost:8080
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: gst_invoices
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d gst_invoices"]
+      interval: 5s
+      retries: 10
+
+  api:
+    image: ${API_IMAGE:-gst-invoice-api}
+    build: ./backend
+    environment:
+      ConnectionStrings__Default: Host=db;Port=5432;Database=gst_invoices;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres}
+      Extraction__Provider: ${EXTRACTION_PROVIDER:-Fake}
+      Extraction__Model: ${EXTRACTION_MODEL:-claude-opus-5-5}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    image: ${WEB_IMAGE:-gst-invoice-web}
+    build: ./frontend
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:

@@ -1,0 +1,12 @@
+{
+  "SupplierName": "Chennai Office Supplies",
+  "SupplierGstin": "33AADFS7788Q1Z8",
+  "BuyerGstin": "32ABCDE1234F1Z9",
+  "InvoiceNumber": "CO/26-27/2665",
+  "InvoiceDate": "2026-06-27",
+  "TaxableValue": 22943.81,
+  "Cgst": 0.0,
+  "Sgst": 0.0,
+  "Igst": 4129.89,
+  "Total": 27073.7
+}

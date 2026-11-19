@@ -1,0 +1,4 @@
+.upload .button { margin-top: 8px; }
+.table-wrap { overflow-x: auto; }
+.clickable { cursor: pointer; }
+.clickable:hover { background: var(--hover); }

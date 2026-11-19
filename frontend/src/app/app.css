@@ -1,0 +1,2 @@
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 0; margin-bottom: 24px; }
+header .container { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }

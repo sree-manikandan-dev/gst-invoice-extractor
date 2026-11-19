@@ -1,0 +1,12 @@
+{
+  "SupplierName": "Malabar Hardware Stores",
+  "SupplierGstin": "32AAKFM4521K1ZC",
+  "BuyerGstin": "32ABCDE1234F1Z9",
+  "InvoiceNumber": "MH/26-27/9892",
+  "InvoiceDate": "2026-06-12",
+  "TaxableValue": 19306.4,
+  "Cgst": 482.66,
+  "Sgst": 482.66,
+  "Igst": 0.0,
+  "Total": 20271.72
+}

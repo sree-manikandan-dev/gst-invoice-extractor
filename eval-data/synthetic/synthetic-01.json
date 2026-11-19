@@ -1,0 +1,12 @@
+{
+  "SupplierName": "Trivandrum Fuels",
+  "SupplierGstin": "32AAGFT2290M1ZZ",
+  "BuyerGstin": "32ABCDE1234F1Z9",
+  "InvoiceNumber": "TF/26-27/3658",
+  "InvoiceDate": "2026-04-09",
+  "TaxableValue": 1738.03,
+  "Cgst": 43.45,
+  "Sgst": 43.45,
+  "Igst": 0.0,
+  "Total": 1824.93
+}
