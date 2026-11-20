@@ -74,3 +74,10 @@ jobs:
           tags: ${{ env.PREFIX }}/web:latest,${{ env.PREFIX }}/web:${{ github.sha }}
           cache-from: type=gha,scope=web
           cache-to: type=gha,mode=max,scope=web
+      # The single-container image used for free hosting (Render). Built to prove it works; Render builds its own.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          cache-from: type=gha,scope=single
+          cache-to: type=gha,mode=max,scope=single

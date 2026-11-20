@@ -13,10 +13,14 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>();
 
-builder.Services.AddDbContext<AppDbContext>(o =>
-    o.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+// Hosted Postgres (Neon, Render, Supabase) hands out a postgres:// URL; Npgsql wants key=value pairs.
+var connectionString = DatabaseUrl.ToNpgsql(Environment.GetEnvironmentVariable("DATABASE_URL"))
+                       ?? builder.Configuration.GetConnectionString("Default");
+builder.Services.AddDbContext<AppDbContext>(o => o.UseNpgsql(connectionString));
 
 builder.Services.Configure<ExtractionOptions>(builder.Configuration.GetSection(ExtractionOptions.Section));
+builder.Services.PostConfigure<ExtractionOptions>(o =>
+    o.GeminiApiKey ??= Environment.GetEnvironmentVariable("GEMINI_API_KEY"));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<InvoiceValidator>();
 builder.Services.AddScoped<InvoiceService>();
@@ -28,6 +32,11 @@ if (provider.Equals("Claude", StringComparison.OrdinalIgnoreCase))
     // AnthropicClient reads ANTHROPIC_API_KEY from the environment. Never put the key in appsettings.
     builder.Services.AddSingleton(_ => new AnthropicClient());
     builder.Services.AddScoped<IInvoiceExtractor, ClaudeInvoiceExtractor>();
+}
+else if (provider.Equals("Gemini", StringComparison.OrdinalIgnoreCase))
+{
+    // Free tier, good for a public demo. Typed HttpClient: pooled connections, configurable timeout.
+    builder.Services.AddHttpClient<IInvoiceExtractor, GeminiInvoiceExtractor>(c => c.Timeout = TimeSpan.FromSeconds(90));
 }
 else
 {
@@ -49,8 +58,15 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors(CorsPolicy);
+
+// In the single-container deploy, the built Angular app sits in wwwroot and the API serves it,
+// so there is one URL and no CORS. Locally, Angular runs on its own dev server instead.
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.MapControllers();
 app.MapHealthChecks("/health");
+app.MapFallbackToFile("index.html");
 
 // Apply EF Core migrations on startup. Fine for a single-instance demo; in a real
 // deployment you'd run migrations as a separate pipeline step.

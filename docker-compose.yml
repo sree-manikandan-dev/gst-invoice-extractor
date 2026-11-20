@@ -24,6 +24,7 @@ services:
       Extraction__Provider: ${EXTRACTION_PROVIDER:-Fake}
       Extraction__Model: ${EXTRACTION_MODEL:-claude-opus-5-5}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     depends_on:
       db:
         condition: service_healthy

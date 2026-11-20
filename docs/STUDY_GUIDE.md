@@ -23,7 +23,7 @@ Read in this order:
 1. `Models/ExtractedInvoice.cs`: why is every field nullable?
 2. `Validation/GstinValidator.cs`: the GSTIN structure and the mod-36 checksum.
 3. `Validation/InvoiceValidator.cs`: each rule, and why problems are flags, not exceptions.
-4. `Extraction/IInvoiceExtractor.cs` and `FakeInvoiceExtractor.cs`: the abstraction and why a fake exists.
+4. `Extraction/IInvoiceExtractor.cs`, `FakeInvoiceExtractor.cs` and `GeminiInvoiceExtractor.cs`: one interface, three providers. Compare how Claude (SDK) and Gemini (raw REST + typed HttpClient) are called.
 
 - [ ] Explain the GSTIN checksum on paper for `27AAPFU0939F1ZV`.
 - [ ] Explain why CGST+SGST means intra-state and IGST means inter-state.
@@ -40,7 +40,7 @@ Read in this order:
 
 ### Step 4. The API layer: `backend/src/GstInvoice.Api` (60 min)
 
-1. `Program.cs`: dependency injection, choosing the provider from config, CORS, health check, migrations on startup.
+1. `Program.cs`: dependency injection, choosing the provider from config, `DATABASE_URL` parsing, serving the Angular build from wwwroot, CORS, health check, migrations on startup.
 2. `Controllers/InvoicesController.cs`: upload limits, content types, ProblemDetails errors, status codes (201, 404, 409, 415, 502).
 3. `Services/InvoiceService.cs`: the upload flow, the duplicate check, approve rules.
 4. `Data/AppDbContext.cs` and `Data/Invoice.cs`: precision on money, jsonb flags, the separate file table, indexes.
@@ -84,6 +84,7 @@ Read in this order:
 3. `docker-compose.yml`: services, health check, `depends_on`, volumes, environment variables.
 4. `.github/workflows/ci.yml`: jobs, `needs`, pushing images only from `main`, build cache.
 5. `eval.yml` (manual, costs money) and `deploy.yml` (SSH, pull, restart).
+6. The root `Dockerfile` and `render.yaml`: one container for free hosting, and why Render needs `$PORT`.
 
 - [ ] Explain why the eval with a real model is not run on every PR.
 - [ ] Explain how you'd get zero-downtime deploys (two instances behind a load balancer, or blue/green).

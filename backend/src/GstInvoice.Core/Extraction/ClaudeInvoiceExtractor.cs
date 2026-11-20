@@ -19,17 +19,6 @@ public sealed class ClaudeInvoiceExtractor(
     IOptions<ExtractionOptions> options,
     ILogger<ClaudeInvoiceExtractor> logger) : IInvoiceExtractor
 {
-    private const string Instructions = """
-        You are reading one Indian GST purchase invoice. Extract the fields into the JSON schema.
-        Rules:
-        - Copy GSTINs exactly as printed (15 characters, uppercase). Do not guess characters you cannot read.
-        - InvoiceDate must be yyyy-MM-dd. Indian bills usually print dd/mm/yyyy.
-        - Amounts are plain numbers in rupees, no commas or currency symbols.
-        - TaxableValue is the total before tax. Total is the final invoice amount.
-        - If a field is not on the invoice or is unreadable, use null. Never invent values.
-        - BuyerGstin is the recipient's GSTIN ("Bill to"), if printed.
-        """;
-
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     public async Task<ExtractionResult> ExtractAsync(byte[] content, string contentType, CancellationToken ct = default)
@@ -50,7 +39,7 @@ public sealed class ClaudeInvoiceExtractor(
             [
                 new UserMessageParam
                 {
-                    Content = new List<ContentBlockParam> { BuildFileBlock(content, contentType), new TextBlockParam { Text = Instructions } },
+                    Content = new List<ContentBlockParam> { BuildFileBlock(content, contentType), new TextBlockParam { Text = ExtractionPrompt.Instructions } },
                 },
             ],
         };
@@ -90,7 +79,7 @@ public sealed class ClaudeInvoiceExtractor(
         logger.LogInformation("Extracted invoice with {Model} in {Ms} ms ({In} in / {Out} out tokens)",
             opts.Model, stopwatch.ElapsedMilliseconds, response.Usage.InputTokens, response.Usage.OutputTokens);
 
-        return new ExtractionResult(Normalize(invoice), opts.Model, response.Usage.InputTokens,
+        return new ExtractionResult(ExtractionPrompt.Normalize(invoice), opts.Model, response.Usage.InputTokens,
             response.Usage.OutputTokens, stopwatch.Elapsed);
     }
 
@@ -141,12 +130,4 @@ public sealed class ClaudeInvoiceExtractor(
             ["additionalProperties"] = JsonSerializer.SerializeToElement(false),
         };
     }
-
-    private static ExtractedInvoice Normalize(ExtractedInvoice inv) => inv with
-    {
-        SupplierGstin = inv.SupplierGstin?.Replace(" ", "").ToUpperInvariant(),
-        BuyerGstin = inv.BuyerGstin?.Replace(" ", "").ToUpperInvariant(),
-        InvoiceNumber = inv.InvoiceNumber?.Trim(),
-        SupplierName = inv.SupplierName?.Trim(),
-    };
 }
