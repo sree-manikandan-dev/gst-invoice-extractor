@@ -19,3 +19,6 @@ eval-results.md
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Built Angular copied in for single-container runs
+backend/src/GstInvoice.Api/wwwroot/

@@ -1,0 +1,20 @@
+# Render Blueprint: one free web service built from the root Dockerfile.
+# The database is Neon's free Postgres (Render's free Postgres is deleted after 30 days).
+# In Render: New > Blueprint > pick this repo, then fill in the two secret values when asked.
+services:
+  - type: web
+    name: gst-invoice-extractor
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: Extraction__Provider
+        value: Gemini
+      - key: Extraction__GeminiModel
+        value: gemini-flash-latest
+      - key: GEMINI_API_KEY
+        sync: false   # secret: entered in the Render dashboard, never committed
+      - key: DATABASE_URL
+        sync: false   # secret: your Neon connection string

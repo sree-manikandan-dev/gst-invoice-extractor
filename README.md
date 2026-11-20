@@ -2,7 +2,7 @@
 
 Upload an Indian GST invoice (photo or PDF). An LLM reads it into structured fields, deterministic rule checks flag anything that doesn't add up, and a reviewer fixes and approves it.
 
-**Stack:** .NET 8 Web API · EF Core + PostgreSQL · Angular 20 · Claude (structured outputs) · xUnit · Docker Compose · GitHub Actions
+**Stack:** .NET 8 Web API · EF Core + PostgreSQL · Angular 20 · Claude or Gemini (schema-constrained JSON) · xUnit · Docker · GitHub Actions
 
 > Screenshot / demo GIF: _add after your first real run (see "Before you put this on your resume")._
 
@@ -13,7 +13,7 @@ Upload an Indian GST invoice (photo or PDF). An LLM reads it into structured fie
 | The model can return malformed output | Structured outputs with a strict JSON schema, mapped to a typed C# record |
 | The model can misread digits (O vs 0, 8 vs B) | GSTIN checksum, tax math, CGST/SGST vs IGST, totals, duplicate checks in plain C# |
 | You can't trust what you don't measure | An eval harness scores field-level accuracy on labelled invoices |
-| Provider lock-in | `IInvoiceExtractor` interface; a fake provider runs the whole app with no API key |
+| Provider lock-in | `IInvoiceExtractor` interface with Claude, Gemini and a fake provider; switch with one setting |
 
 ## Architecture
 
@@ -60,13 +60,18 @@ dotnet run --project src/GstInvoice.Api
 cd frontend && npm install && npx ng serve
 ```
 
+### Deploy for free
+
+Render (app) + Neon (Postgres) + Gemini free tier (AI) costs ₹0. See [docs/FREE_DEPLOY.md](docs/FREE_DEPLOY.md). The root `Dockerfile` builds one container where the API also serves the Angular app, and `render.yaml` describes the service. [docs/DEPLOY.md](docs/DEPLOY.md) covers a paid single-server setup with Docker Compose.
+
 ### Tests and eval
 
 ```bash
 cd backend
-dotnet test                                                  # 30 unit tests, no API key needed
+dotnet test                                                  # 36 unit tests, no API key needed
 dotnet run --project src/GstInvoice.Eval -- --fake           # checks the eval harness itself
-dotnet run --project src/GstInvoice.Eval -- --out eval-results.md   # real run, needs ANTHROPIC_API_KEY
+dotnet run --project src/GstInvoice.Eval -- --provider gemini --out eval-results.md   # free, needs GEMINI_API_KEY
+dotnet run --project src/GstInvoice.Eval -- --out eval-results.md                     # Claude, needs ANTHROPIC_API_KEY
 ```
 
 ## Eval results
@@ -84,7 +89,7 @@ dotnet run --project src/GstInvoice.Eval -- --out eval-results.md   # real run, 
 
 ```
 backend/
-  src/GstInvoice.Core/        Domain: extraction (Claude + fake), validation rules, eval comparer. No web or DB code.
+  src/GstInvoice.Core/        Domain: extraction (Claude, Gemini, fake), validation rules, eval comparer. No web or DB code.
   src/GstInvoice.Api/         ASP.NET Core API: controller, service, EF Core DbContext + migrations
   src/GstInvoice.Eval/        Console app that scores extraction accuracy
   tests/GstInvoice.Tests/     xUnit tests for validation, comparer and service
@@ -92,7 +97,8 @@ frontend/                     Angular 20 standalone components, signals, reactiv
 eval-data/                    Labelled invoices for the eval
 tools/                        Synthetic invoice generator
 .github/workflows/            CI (build, test, images), manual eval, manual deploy
-docs/                         Deploy guide, study guide
+docs/                         Free deploy guide, server deploy guide, study guide
+Dockerfile, render.yaml       Single-container image and Render config for free hosting
 ```
 
 ## Design decisions and trade-offs
@@ -112,7 +118,7 @@ docs/                         Deploy guide, study guide
 
 ## Before you put this on your resume
 
-1. Run the real eval and fill in the results table above.
-2. Run the app with `EXTRACTION_PROVIDER=Claude`, upload a few bills, and add a screenshot or GIF.
-3. Deploy it (see [docs/DEPLOY.md](docs/DEPLOY.md)) and add the live link.
+1. Run the eval with Gemini (free) or Claude and fill in the results table above.
+2. Run the app with a real provider (Gemini is free), upload a few bills, and add a screenshot or GIF.
+3. Deploy it for free (see [docs/FREE_DEPLOY.md](docs/FREE_DEPLOY.md)) and add the live link.
 4. Work through [docs/STUDY_GUIDE.md](docs/STUDY_GUIDE.md) until you can explain every file.

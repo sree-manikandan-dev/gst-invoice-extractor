@@ -1,9 +1,9 @@
 // Runs the extractor over hand-labelled invoices and reports field-level accuracy.
 //
-//   dotnet run --project src/GstInvoice.Eval -- [dataDir] [--fake] [--min 0.85] [--out results.md]
+//   dotnet run --project src/GstInvoice.Eval -- [dataDir] [--fake | --provider claude|gemini] [--model name] [--min 0.85] [--out results.md]
 //
 // dataDir holds pairs: <name>.png|.jpg|.jpeg|.webp|.pdf + <name>.json (the correct values).
-// Needs ANTHROPIC_API_KEY unless --fake is passed. Every real run costs money: ~10 invoices per run.
+// Claude needs ANTHROPIC_API_KEY (paid). Gemini needs GEMINI_API_KEY (free tier, rate limited).
 using System.Text;
 using System.Text.Json;
 using Anthropic;
@@ -17,7 +17,8 @@ var dataDir = args.FirstOrDefault(a => !a.StartsWith("--")) ?? FindDefaultDataDi
 var useFake = args.Contains("--fake");
 var minAccuracy = ReadOption("--min") is { } m ? decimal.Parse(m) : (decimal?)null;
 var outFile = ReadOption("--out");
-var model = ReadOption("--model") ?? "claude-opus-5-5";
+var provider = (ReadOption("--provider") ?? "claude").ToLowerInvariant();
+var model = ReadOption("--model") ?? (provider == "gemini" ? "gemini-flash-latest" : "claude-opus-5-5");
 
 var mediaTypes = new Dictionary<string, string>
 {
@@ -38,11 +39,15 @@ if (cases.Count == 0)
 }
 
 using var loggerFactory = LoggerFactory.Create(b => b.AddSimpleConsole().SetMinimumLevel(LogLevel.Warning));
-IInvoiceExtractor extractor = useFake
-    ? new FakeInvoiceExtractor()
-    : new ClaudeInvoiceExtractor(new AnthropicClient(),
+IInvoiceExtractor extractor = useFake ? new FakeInvoiceExtractor() : provider switch
+{
+    "gemini" => new GeminiInvoiceExtractor(new HttpClient { Timeout = TimeSpan.FromSeconds(90) },
+        Options.Create(new ExtractionOptions { GeminiModel = model, GeminiApiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY") }),
+        loggerFactory.CreateLogger<GeminiInvoiceExtractor>()),
+    _ => new ClaudeInvoiceExtractor(new AnthropicClient(),
         Options.Create(new ExtractionOptions { Provider = "Claude", Model = model }),
-        loggerFactory.CreateLogger<ClaudeInvoiceExtractor>());
+        loggerFactory.CreateLogger<ClaudeInvoiceExtractor>()),
+};
 
 var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 var allResults = new List<FieldResult>();
@@ -73,6 +78,7 @@ foreach (var (labelPath, filePath) in cases)
     catch (ExtractionException ex)
     {
         failures++;
+        if (provider == "gemini" && ex.Message.Contains("rate limit")) await Task.Delay(TimeSpan.FromSeconds(30));
         Console.WriteLine($"{name,-24} FAILED: {ex.Message}");
     }
 }
